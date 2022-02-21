@@ -1,3 +1,6 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+
 from nltk.corpus import wordnet as wn
 from nltk.corpus import sentiwordnet as swn
 import nltk
