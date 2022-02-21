@@ -1,3 +1,6 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+
 import functools
 import random
 from function import Function, FUNCTION_REGISTRY
