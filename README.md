@@ -31,3 +31,6 @@ Coming soon.
 
 ## Training a Model
 Coming soon.
+
+# Licensing
+The majority of TaskBench500 is licensed under CC-BY-NC, however portions of the project are available under separate license terms: nltk is licensed under the Apache 2.0 license; tqdm is licensed under the MIT license; and functools and glob are licensed under the BSD license.
