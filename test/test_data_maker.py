@@ -1,3 +1,6 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+
 import os
 import json
 from nltk.corpus import wordnet as wn
