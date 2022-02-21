@@ -3,6 +3,7 @@
 
 from function import Function, FUNCTION_REGISTRY, WordFunction
 
+
 class LogicalAnd(WordFunction):
     """
     Maps bool-> bool
