@@ -1,0 +1,5 @@
+TaskBenchData/
+__pycache__
+resources/
+*.tar.gz
+temp/
