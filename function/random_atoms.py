@@ -1,6 +1,3 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-
 import json
 import os
 from function import Function, FUNCTION_REGISTRY, WordFunction

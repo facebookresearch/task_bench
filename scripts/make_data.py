@@ -1,6 +1,3 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-
 from tqdm import tqdm
 import nltk
 import functools
@@ -11,8 +8,12 @@ import os
 import time
 from function import Function
 import random
-from function.utils import parse_to_function_tree, make_sampler_from_function, convert_relation_to_nl
+from function.utils import parse_to_function_tree, make_sampler_from_function, convert_relation_to_nl, recursive_apply_str_func
 from function import WikidataEntity, GetWikiRelatedWords
+
+
+def recursive_convert_underscores(collection):
+    return recursive_apply_str_func(collection, lambda x: x.replace("_", " ").strip())
 
 
 def load_functions(function_file, function):
@@ -28,11 +29,12 @@ def load_functions(function_file, function):
     return functions
 
 
-def make_word_function(args, fn_tree, function, wf):
+def make_word_function(args, fn_tree, function, wf=None):
     """
     get words
     """
     all_samples = function.domain()
+    outputs = []
     for w, word in tqdm(enumerate(all_samples)):
         fn_words = function([{word}])
         related_words = fn_words['out']
@@ -58,16 +60,26 @@ def make_word_function(args, fn_tree, function, wf):
             ex['inner_fns'] = {str(fn): [inner_fn_words[f]] if type(inner_fn_words[f]) == bool else list(inner_fn_words[f]) for f, fn in enumerate(function.inner_fns)}
         ex["nl_R"] = convert_relation_to_nl(relation_fn=function)
         ex["R"] = str(function)
-        wf.write(f"{json.dumps(ex)}\n")
-        wf.flush()
+        # convert underscores
+        ex["inputs"] = recursive_convert_underscores(ex["inputs"])
+        ex["all_tgts"] = recursive_convert_underscores(ex["all_tgts"])
+        ex["inner_fns"] = recursive_convert_underscores(ex["inner_fns"])
+        ex["train_tgts"] = random.choice(ex["all_tgts"])
+        # write to output
+        if wf is not None:
+            wf.write(f"{json.dumps(ex)}\n")
+            wf.flush()
+        outputs.append(ex)
+    return outputs
 
 
-def make_seq_function(args, fn_tree, function, wf):
+def make_seq_function(args, fn_tree, function, wf=None):
     """
     get sequences
     """
     sample_function = make_sampler_from_function(fn_tree, sample_type='seq')
     input_sampler = Function.build(fn_tree=sample_function, maxlen=8, suppress_print=True)
+    outputs = []
     for s in tqdm(range(args.num_samples)):
         Xs = input_sampler()
         fn_seqs = function(Xs)
@@ -83,14 +95,22 @@ def make_seq_function(args, fn_tree, function, wf):
             inner_fns = {str(fn): [list(inner_fn_out)[0][0].to_dict() for inner_fn_out in inner_fn_outs[f]] for f, fn in enumerate(function.inner_fns)}
         else:
             Xs = [list(xs)[0] for xs in Xs]
+            Ys = [list(ys) for ys in Ys]
             inner_fns = {str(fn): [list(inner_fn_out) for inner_fn_out in inner_fn_outs[f]] for f, fn in enumerate(function.inner_fns)}
-            train_tgts = [[random.choice(ys) for ys in Ys]]
-        wf.write(json.dumps({
-            "inputs": [Xs], "train_tgts": train_tgts, "all_tgts": Ys,
-            "inner_fns": inner_fns,
-            "R": str(function), "nl_R": convert_relation_to_nl(relation_fn=function),
-        })+"\n")
-        wf.flush()
+            train_tgts = [random.choice(ys) for ys in Ys]
+        ex = {
+            "inputs": recursive_convert_underscores([Xs]),
+            "train_tgts": recursive_convert_underscores(train_tgts),
+            "all_tgts": recursive_convert_underscores(Ys),
+            "inner_fns": recursive_convert_underscores(inner_fns),
+            "R": str(function),
+            "nl_R": convert_relation_to_nl(relation_fn=function),
+        }
+        if wf is not None:
+            wf.write(json.dumps(ex)+"\n")
+            wf.flush()
+        outputs.append(ex)
+    return outputs
 
 
 def make_functions(args, functions, make_splits=False):
@@ -108,10 +128,15 @@ def make_functions(args, functions, make_splits=False):
         assert str(fn_tree).replace(' ','') == function_nl.replace(' ',''), f"{str(fn_tree)} and {function_nl} differ!"
         function = Function.build(fn_tree=fn_tree, suppress_print=True)
 
-        if args.sample_type == 'seq':
+        sample_type = args.sample_type
+        if args.sample_type is None:
+            # automatically infer
+            sample_type = 'seq' if fn_tree.get_base_fn() in ["filter", "map"] else 'word'
+
+        if sample_type == 'seq':
             make_seq_function(args, fn_tree, function, wf)
     
-        elif args.sample_type == 'word':
+        elif sample_type == 'word':
             make_word_function(args, fn_tree, function, wf)
 
         else:
@@ -125,6 +150,8 @@ def main(args):
 
     skipped_fns = make_functions(args, functions, make_splits=True)
 
+    # TODO add option for splitting data
+
     print(f"Skipped functions: {skipped_fns}")
     for fn in skipped_fns:
         os.remove(fn)
@@ -133,7 +160,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--function', default=None, help="stringified function")
-    parser.add_argument('--function_file', default=None, help="file to list of stringified functions")
+    parser.add_argument('--function_file', default=None, help="file containing newline-separated list of stringified functions for bulk processing")
     parser.add_argument('--save_dir', default=None, help="directory to save functions in")
     parser.add_argument('--sample_type', choices=['seq', 'word'], help="type of inputs to sample")
     parser.add_argument('--num_samples', type=int, default=2000, help="number of sequences to sample")

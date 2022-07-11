@@ -1,6 +1,3 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-
 from function import Function, FUNCTION_REGISTRY, WordFunction
 
 
