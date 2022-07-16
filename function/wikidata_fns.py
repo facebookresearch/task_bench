@@ -8,7 +8,7 @@ import pandas as pd
 
 
 wdaccess_p = {
-    'backend': "http://128.30.64.44:8890/sparql",
+    'backend': "http://localhost:8890/sparql",
     'timeout': 10000,
     'global_result_limit': 10000,
     'logger': logging.getLogger(__name__),
