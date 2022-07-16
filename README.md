@@ -53,8 +53,14 @@ export PYTHONPATH=.
 
 
 ## Generating Datasets for Custom Tasks
+Begin by downloading the necessary resources for the creation of these tasks.
+```bash
+wget dl.fbaipublicfiles.com/task_bench/resources.tar.gz
+tar -xzvf resources.tar.gz
+```
+
 ### Wikidata Setup for Creating Knowledge Tasks
-This section describes how to set up Wikidata to create factual tasks. If you do not need to create tasks which require factual knowledge, you may skip this section.
+This section describes how to set up Wikidata endpoint to create factual tasks. If you do not need to create tasks which require factual knowledge, you may skip this section.
 
 These instructions were adapted from [the following GIT repository](https://github.com/UKPLab/coling2018-graph-neural-networks-question-answering/blob/master/WikidataHowTo.md).
 
