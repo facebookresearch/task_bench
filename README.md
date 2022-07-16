@@ -4,8 +4,8 @@ The TaskBench500 dataset and code for generating custom tasks and adapting a mod
 ## Data
 The TaskBench dataset is available under
 ```bash
-wget http://web.mit.edu/bzl/www/TaskBench500/TaskBenchData.tar.gz
-tar -xzvf TaskBenchData.tar.gz
+wget dl.fbaipublicfiles.com/task_bench/taskbench500.tar.gz
+tar -xzvf taskbench500.tar.gz
 ```
 
 The file structure looks as follows:
